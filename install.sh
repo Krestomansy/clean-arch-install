@@ -3,31 +3,24 @@
 set -uo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
-# логгирование
-exec 1> >(tee "stdout.log")
-exec 2> >(tee "stderr.log")
-
-# настройка времени
+# time settings
 timedatectl set-timezone Europe/Moscow
 timedatectl set-ntp true
 
-# отсортировать зеркала pacman по скорости скачивания
+# sorting pacman mirrors by download speed
 pacman -Syy
 pacman -S --noconfirm pacman-contrib
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
 echo "Sorting mirrors by speed, this may take a while..."
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist
 
-# TODO: добавить запрос на авторазбивку и предупреждение о стирании всех существующих файлов 
-#  на выбранном диске
-
-# выбор диска
+# choosing disk
 pacman -S --noconfirm dialog
 devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
 device=$(dialog --stdout --menu "Choose installation disk" 0 0 0 ${devicelist}) || exit 1
 clear
 
-# разбивка на разделы
+# creating partitions
 (echo g;
 echo n; echo 1; echo; echo +300M; echo t; echo 1; echo 1;
 echo n; echo 2; echo; echo +1G; 
@@ -35,14 +28,14 @@ echo n; echo 3; echo; echo +8G; echo t; echo 3; echo 19;
 echo n; echo 4; echo; echo;
 echo p; echo w) | fdisk "${device}"
 
-# форматирование разделов
+# formatting partitions
 mkfs.fat -F32  "${device}1"
 mkfs.ext4 -L boot "${device}2"
 mkswap -L swap "${device}3"
 swapon "${device}3"
 mkfs.btrfs -L arch "${device}4" -f
 
-# создание подтомов BTRFS
+# creating BTRFS subvolumes
 mount "${device}4" /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@var
@@ -50,7 +43,7 @@ btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 umount /mnt
 
-# монтирование разделов
+# mounting partitions and subvolumes
 mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@ "${device}4" /mnt
 mkdir -p /mnt/{home,boot,var,.snapshots}
 mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@var "${device}4" /mnt/var
@@ -60,19 +53,19 @@ mount "${device}2" /mnt/boot
 mkdir /mnt/boot/efi
 mount "${device}1" /mnt/boot/efi
 
-# установка основных пакетов, генерация fstab
+# installing base packages, generating fstab
 pacstrap /mnt base 
 arch-chroot /mnt pacman -S --noconfirm base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano
 echo "generating fstab..."
 genfstab -pU /mnt >> /mnt/etc/fstab
 
-# установить имя хоста
+# set hostname
 echo -n "Hostname: "
 read hostname
 : "${hostname:?"Missing hostname"}"
 echo "${hostname}" > /mnt/etc/hostname
 
-# установить пароль рута
+# set root password
 echo -n "Root password: "
 read -s passwordRoot
 echo
@@ -82,7 +75,7 @@ echo
 [[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
 echo "root:$passwordRoot" | chpasswd --root /mnt
 
-# настройка локалей
+# locale setup
 echo "LANG=en_US.UTF-8 UTF-8" > /mnt/etc/locale.conf
 echo "LANG=ru_RU.UTF-8 UTF-8" > /mnt/etc/locale.conf
 arch-chroot /mnt locale-gen
@@ -96,7 +89,7 @@ KEYMAP=ru
 FONT=cyr-sun16
 EOF
 
-# инициализация и настройка pacman
+# pacman init and configuring
 arch-chroot /mnt pacman-key --init
 arch-chroot /mnt pacman-key --populate archlinux
 sed -i 's/# Color/Color/' /mnt/etc/pacman.conf
@@ -108,13 +101,13 @@ EOF
 arch-chroot /mnt pacman -Sy
 arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
 
-# создание начального загрузочного диска
+# creating init disk
 arch-chroot /mnt mkinitcpio -p linux
 
-# разрешение sudo для всех пользователей
-sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' mnt/etc/sudoers
+# adding wheel to sudo
+sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
 
-# создание пользователя
+# creating user
 echo -n "Username: "
 read username
 : "${username:?"Missing username"}"
@@ -130,18 +123,19 @@ echo
 arch-chroot /mnt useradd -mg users -G wheel "${username}"
 echo "$username:$passwordUser" | chpasswd --root /mnt
 
-# включение в загрузку сетевого менеджера
+# enabling network manager
 arch-chroot /mnt systemctl enable NetworkManager.service
-# включение автоматической очистки кэша пакетов
+# enabling automatic cleaning of packages cashe 
 arch-chroot /mnt systemctl enable paccache.timer
 
-# установка Grub
+# installing Grub
 arch-chroot /mnt pacman -S --noconfirm grub efibootmgr grub-btrfs os-prober
 arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
-# установка графических драйверов
+# installing grafics drivers
 arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 
-# размонтирование всех разделов
+# unmounting partitions
+echo "unmounting all..."
 umount -R /mnt
