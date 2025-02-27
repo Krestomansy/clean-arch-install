@@ -15,14 +15,16 @@ timedatectl set-ntp true
 pacman -Syy
 pacman -S pacman-contrib
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+echo "Sorting mirrors by speed, this may take a while..."
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist
 
 # TODO: добавить запрос на авторазбивку и предупреждение о стирании всех существующих файлов 
 #  на выбранном диске
 
 # выбор диска
+pacman -S dialog
 devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
-device=$(dialog --stdout --menu "Выберите диск для установки" 0 0 0 ${devicelist}) || exit 1
+device=$(dialog --stdout --menu "Choose installation disk" 0 0 0 ${devicelist}) || exit 1
 clear
 
 # разбивка на разделы
@@ -59,20 +61,22 @@ mkdir /mnt/boot/efi
 mount "${device}1" /mnt/boot/efi
 
 # установка основных пакетов, генерация fstab
-pacstrap /mnt base base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano
+pacstrap /mnt base base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano |& tee -a "${LOG}"
+[[ $? -ne 0 ]] && error_msg "Installing base system to /mnt failed. Check error messages above."
+echo "generating genfstab..."
 genfstab -pU /mnt >> /mnt/etc/fstab
 
 # установить имя хоста
-echo -n "Имя хоста: "
+echo -n "Hostname: "
 read hostname
 : "${hostname:?"Missing hostname"}"
 echo "${hostname}" > /mnt/etc/hostname
 
 # установить пароль рута
-echo -n "Установите пароль root: "
+echo -n "Root password: "
 read -s passwordRoot
 echo
-echo -n "Повторите пароль: "
+echo -n "Repeat password: "
 read -s password2Root
 echo
 [[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
@@ -111,14 +115,14 @@ arch-chroot /mnt mkinitcpio -p linux
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' mnt/etc/sudoers
 
 # создание пользователя
-echo -n "Имя пользователя: "
+echo -n "Username: "
 read username
 : "${username:?"Missing username"}"
 
-echo -n "Пароль для пользователя ${username}: "
+echo -n "Password for user ${username}: "
 read -s passwordUser
 echo
-echo -n "Повторите пароль: "
+echo -n "Repeat password: "
 read -s password2User
 echo
 [[ "$passwordUser" == "$password2User" ]] || ( echo "Passwords did not match"; exit 1; )
