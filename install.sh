@@ -121,7 +121,7 @@ echo
 echo -n "Повторите пароль: "
 read -s password2User
 echo
-[[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
+[[ "$passwordUser" == "$password2User" ]] || ( echo "Passwords did not match"; exit 1; )
 
 arch-chroot /mnt useradd -mg users -G wheel "${username}"
 echo "$username:$passwordUser" | chpasswd --root /mnt
