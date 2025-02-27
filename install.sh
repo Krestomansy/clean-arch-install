@@ -107,7 +107,7 @@ Include = /etc/pacman.d.mirrorlist
 EOF
 arch-chroot /mnt pacman -Sy
 arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
-pacm
+
 # создание начального загрузочного диска
 arch-chroot /mnt mkinitcpio -p linux
 
