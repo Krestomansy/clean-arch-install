@@ -102,7 +102,7 @@ arch-chroot /mnt pacman -Sy
 arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
 
 # creating init disk
-arch-chroot /mnt mkinitcpio -p linux
+arch-chroot /mnt mkinitcpio -p linux || true
 
 # adding wheel to sudo
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
