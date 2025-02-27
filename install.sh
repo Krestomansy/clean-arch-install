@@ -76,8 +76,8 @@ echo
 echo "root:$passwordRoot" | chpasswd --root /mnt
 
 # locale setup
-echo "LANG=en_US.UTF-8 UTF-8" > /mnt/etc/locale.conf
-echo "LANG=ru_RU.UTF-8 UTF-8" > /mnt/etc/locale.conf
+sed -i 's/# LANG=en_US.UTF-8 UTF-8/LANG=en_US.UTF-8 UTF-8/' /mnt/etc/locale.gen
+sed -i 's/# LANG=ru_RU.UTF-8 UTF-8/LANG=ru_RU.UTF-8 UTF-8/' /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 
 cat >> /mnt/etc/locale.conf << EOF
