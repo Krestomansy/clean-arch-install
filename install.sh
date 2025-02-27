@@ -103,7 +103,7 @@ sed -i 's/# Color/Color/' /mnt/etc/pacman.conf
 sed -i 's/# ParallelDownloads = 5/ParallelDownloads = 10/' /mnt/etc/pacman.conf
 cat >> /mnt/etc/pacman.conf << EOF
 [multilib]
-Include = /etc/pacman.d.mirrorlist
+Include = /etc/pacman.d/mirrorlist
 EOF
 arch-chroot /mnt pacman -Sy
 arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
