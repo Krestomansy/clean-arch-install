@@ -3,6 +3,9 @@
 set -uo pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
+exec 1> >(tee "stdout.log")
+exec 2> >(tee "stderr.log")
+
 # time settings
 timedatectl set-timezone Europe/Moscow
 timedatectl set-ntp true
@@ -80,9 +83,8 @@ sed -i 's/# LANG=en_US.UTF-8 UTF-8/LANG=en_US.UTF-8 UTF-8/' /mnt/etc/locale.gen
 sed -i 's/# LANG=ru_RU.UTF-8 UTF-8/LANG=ru_RU.UTF-8 UTF-8/' /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
 
-cat >> /mnt/etc/locale.conf << EOF
-LANG="ru_RU.UTF-8"
-EOF
+touch /mnt/etc/locale.conf
+echo "LANG=ru_RU.UTF-8" > /mnt/etc/locale.conf
 
 cat >> /mnt/etc/vconsole.conf << EOF
 KEYMAP=ru
