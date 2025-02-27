@@ -61,8 +61,9 @@ mkdir /mnt/boot/efi
 mount "${device}1" /mnt/boot/efi
 
 # установка основных пакетов, генерация fstab
-pacstrap /mnt base base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano |& tee -a "${LOG}"
-[[ $? -ne 0 ]] && error_msg "Installing base system to /mnt failed. Check error messages above."
+pacstrap /mnt base 
+arch-chroot /mnt pacman -S base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano
+echo "y"
 echo "generating genfstab..."
 genfstab -pU /mnt >> /mnt/etc/fstab
 
