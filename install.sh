@@ -13,8 +13,7 @@ timedatectl set-ntp true
 
 # отсортировать зеркала pacman по скорости скачивания
 pacman -Syy
-pacman -S pacman-contrib
-echo "y"
+pacman -S --noconfirm pacman-contrib
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
 echo "Sorting mirrors by speed, this may take a while..."
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist
@@ -23,8 +22,7 @@ rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist
 #  на выбранном диске
 
 # выбор диска
-pacman -S dialog
-echo "y"
+pacman -S --noconfirm dialog
 devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
 device=$(dialog --stdout --menu "Choose installation disk" 0 0 0 ${devicelist}) || exit 1
 clear
@@ -64,8 +62,7 @@ mount "${device}1" /mnt/boot/efi
 
 # установка основных пакетов, генерация fstab
 pacstrap /mnt base 
-arch-chroot /mnt pacman -S base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano
-echo "y"
+arch-chroot /mnt pacman -S --noconfirm base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano
 echo "generating fstab..."
 genfstab -pU /mnt >> /mnt/etc/fstab
 
@@ -102,15 +99,15 @@ EOF
 # инициализация и настройка pacman
 arch-chroot /mnt pacman-key --init
 arch-chroot /mnt pacman-key --populate archlinux
-cat >> mnt/etc/pacman.conf << EOF
+sed -i 's/# Color/Color/' /mnt/etc/pacman.conf
+sed -i 's/# ParallelDownloads = 5/ParallelDownloads = 10/' /mnt/etc/pacman.conf
+cat >> /mnt/etc/pacman.conf << EOF
 [multilib]
 Include = /etc/pacman.d.mirrorlist
-Color
-ParallelDownloads = 10
 EOF
 arch-chroot /mnt pacman -Sy
-arch-chroot /mnt pacman -S bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
-
+arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
+pacm
 # создание начального загрузочного диска
 arch-chroot /mnt mkinitcpio -p linux
 
@@ -139,12 +136,12 @@ arch-chroot /mnt systemctl enable NetworkManager.service
 arch-chroot /mnt systemctl enable paccache.timer
 
 # установка Grub
-arch-chroot /mnt pacman -S grub efibootmgr grub-btrfs os-prober
+arch-chroot /mnt pacman -S --noconfirm grub efibootmgr grub-btrfs os-prober
 arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 # установка графических драйверов
-arch-chroot /mnt pacman -S xf86-video-vesa
+arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 
 # размонтирование всех разделов
 umount -R /mnt
