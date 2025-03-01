@@ -59,6 +59,11 @@ arch-chroot /mnt pacman -S --noconfirm base-devel linux linux-headers linux-firm
 echo "generating fstab..."
 genfstab -pU /mnt >> /mnt/etc/fstab
 
+arch-chroot /mnt timedatectl set-timezone Europe/Moscow
+arch-chroot /mnt timedatectl set-ntp true
+arch-chroot /mnt systemctl enable systemd-timesyncd
+arch-chroot /mnt hwclock --systohc
+
 # set hostname
 echo -n "Hostname: "
 read hostname
@@ -79,7 +84,6 @@ echo "root:$passwordRoot" | chpasswd --root /mnt
 sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /mnt/etc/locale.gen
 sed -i 's/#ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /mnt/etc/locale.gen
 arch-chroot /mnt locale-gen
-
 touch /mnt/etc/locale.conf
 echo "LANG=ru_RU.UTF-8" > /mnt/etc/locale.conf
 
@@ -99,9 +103,13 @@ Include = /etc/pacman.d/mirrorlist
 EOF
 arch-chroot /mnt pacman -Sy
 arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
+arch-chroot /mnt git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
 
 # creating init disk
 arch-chroot /mnt mkinitcpio -p linux || true
+
+arch-chroot /mnt pacman -S timeshift
+arch-chroot /mnt yay -S --noconfirm timeshift-autosnap
 
 # adding wheel to sudo
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
