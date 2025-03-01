@@ -8,7 +8,7 @@ su $username << EOF
 cd ~
 git clone https://aur.archlinux.org/yay.git
 cd yay
-makepkg -si
+echo "y" | makepkg -si
 EOF
 
 su $username << EOF
