@@ -158,6 +158,7 @@ EOF
 
 rm /etc/suoders.d/$username
 EOL 
+chmod +x /mnt/root/yay-install.sh
 arch-chroot /mnt /root/yay-install.sh
 rm /mnt/root/yay-install.sh
 
