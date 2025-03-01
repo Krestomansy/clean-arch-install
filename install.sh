@@ -144,10 +144,8 @@ arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 cp ~/clean-arch-install/chroot-scripts/yay-timeshift.sh /mnt/root/
 dos2unix -- /mnt/root/yay-timeshift.sh
 chmod +x /mnt/root/yay-timeshift.sh
-arch-chroot /mnt /root/yay-timeshift.sh
+arch-chroot /mnt /root/yay-timeshift.sh $username
 rm /mnt/root/yay-timeshift.sh
-
-arch-chroot /mnt yay -S --noconfirm timeshift-autosnap
 
 # unmounting partitions
 echo "unmounting all..."
