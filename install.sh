@@ -156,7 +156,7 @@ su $username << EOF
 yay -S --noconfirm timeshift-autosnap
 EOF 
 
-rm /etc/suoders.d/$user
+rm /etc/suoders.d/$username
 EOL 
 arch-chroot /mnt /root/yay-install.sh
 rm /mnt/root/yay-install.sh
