@@ -89,8 +89,8 @@ genfstab -pU /mnt >> /mnt/etc/fstab
 echo "${hostname}" > /mnt/etc/hostname
 echo "root:$passwordRoot" | chpasswd --root /mnt
 
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
-arch-chroot /mnt systemctl enable systemd-timesyncd.service. 
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+arch-chroot /mnt systemctl enable systemd-timesyncd.service 
 arch-chroot /mnt hwclock --systohc
 
 # locale setup
