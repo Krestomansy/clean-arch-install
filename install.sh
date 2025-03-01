@@ -20,6 +20,35 @@ devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
 device=$(dialog --stdout --menu "Choose installation disk" 0 0 0 ${devicelist}) || exit 1
 clear
 
+# set hostname
+echo -n "Hostname: "
+read hostname
+: "${hostname:?"Missing hostname"}"
+echo "${hostname}" > /mnt/etc/hostname
+
+# set root password
+echo -n "Root password: "
+read -s passwordRoot
+echo
+echo -n "Repeat password: "
+read -s password2Root
+echo
+[[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
+echo "root:$passwordRoot" | chpasswd --root /mnt
+
+# creating user
+echo -n "Username: "
+read username
+: "${username:?"Missing username"}"
+
+echo -n "Password for user ${username}: "
+read -s passwordUser
+echo
+echo -n "Repeat password: "
+read -s password2User
+echo
+[[ "$passwordUser" == "$password2User" ]] || ( echo "Passwords did not match"; exit 1; )
+
 # creating partitions
 (echo g;
 echo n; echo 1; echo; echo +300M; echo t; echo 1; echo 1;
@@ -64,22 +93,6 @@ arch-chroot /mnt timedatectl set-ntp true
 arch-chroot /mnt systemctl enable systemd-timesyncd
 arch-chroot /mnt hwclock --systohc
 
-# set hostname
-echo -n "Hostname: "
-read hostname
-: "${hostname:?"Missing hostname"}"
-echo "${hostname}" > /mnt/etc/hostname
-
-# set root password
-echo -n "Root password: "
-read -s passwordRoot
-echo
-echo -n "Repeat password: "
-read -s password2Root
-echo
-[[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
-echo "root:$passwordRoot" | chpasswd --root /mnt
-
 # locale setup
 sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /mnt/etc/locale.gen
 sed -i 's/#ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /mnt/etc/locale.gen
@@ -102,30 +115,14 @@ cat >> /mnt/etc/pacman.conf << EOF
 Include = /etc/pacman.d/mirrorlist
 EOF
 arch-chroot /mnt pacman -Sy
-arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g
+arch-chroot /mnt pacman -S --noconfirm bash-completion openssh arch-install-scripts networkmanager git wget htop neofetch xdg-user-dirs pacman-contrib ntfs-3g go timeshift
 arch-chroot /mnt git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
 
 # creating init disk
 arch-chroot /mnt mkinitcpio -p linux || true
 
-arch-chroot /mnt pacman -S timeshift
-arch-chroot /mnt yay -S --noconfirm timeshift-autosnap
-
 # adding wheel to sudo
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
-
-# creating user
-echo -n "Username: "
-read username
-: "${username:?"Missing username"}"
-
-echo -n "Password for user ${username}: "
-read -s passwordUser
-echo
-echo -n "Repeat password: "
-read -s password2User
-echo
-[[ "$passwordUser" == "$password2User" ]] || ( echo "Passwords did not match"; exit 1; )
 
 arch-chroot /mnt useradd -mg users -G wheel "${username}"
 echo "$username:$passwordUser" | chpasswd --root /mnt
@@ -142,6 +139,29 @@ arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 # installing grafics drivers
 arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
+
+cat >/mnt/root/yay-install.sh <<EOL 
+#!/bin/bash
+
+echo "$username ALL=(ALL:ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/$username
+
+su $username << EOF
+cd ~
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si
+EOF 
+
+su $username << EOF
+yay -S --noconfirm timeshift-autosnap
+EOF 
+
+rm /etc/suoders.d/$user
+EOL 
+arch-chroot /mnt /root/yay-install.sh
+rm /mnt/root/yay-install.sh
+
+arch-chroot /mnt yay -S --noconfirm timeshift-autosnap
 
 # unmounting partitions
 echo "unmounting all..."
