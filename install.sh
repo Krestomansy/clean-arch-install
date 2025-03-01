@@ -24,7 +24,6 @@ clear
 echo -n "Hostname: "
 read hostname
 : "${hostname:?"Missing hostname"}"
-echo "${hostname}" > /mnt/etc/hostname
 
 # set root password
 echo -n "Root password: "
@@ -34,7 +33,6 @@ echo -n "Repeat password: "
 read -s password2Root
 echo
 [[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
-echo "root:$passwordRoot" | chpasswd --root /mnt
 
 # creating user
 echo -n "Username: "
@@ -87,6 +85,9 @@ pacstrap /mnt base
 arch-chroot /mnt pacman -S --noconfirm base-devel linux linux-headers linux-firmware intel-ucode amd-ucode nano
 echo "generating fstab..."
 genfstab -pU /mnt >> /mnt/etc/fstab
+
+echo "${hostname}" > /mnt/etc/hostname
+echo "root:$passwordRoot" | chpasswd --root /mnt
 
 arch-chroot /mnt timedatectl set-timezone Europe/Moscow
 arch-chroot /mnt timedatectl set-ntp true
