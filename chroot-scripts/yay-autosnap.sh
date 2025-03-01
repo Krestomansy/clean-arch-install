@@ -15,4 +15,4 @@ su $username << EOF
 yay -S --noconfirm timeshift-autosnap
 EOF
 
-rm /etc/suoders.d/$username
+rm /etc/sudoers.d/$username
