@@ -141,30 +141,14 @@ arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 # installing grafics drivers
 arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 
-cat >/mnt/root/yay-install.sh <<EOL 
-#!/bin/bash
-
-echo "$username ALL=(ALL:ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/$username
-
-su $username << EOF
-cd ~
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si
-EOF 
-
-su $username << EOF
-yay -S --noconfirm timeshift-autosnap
-EOF 
-
-rm /etc/suoders.d/$username
-EOL 
-chmod +x /mnt/root/yay-install.sh
-arch-chroot /mnt /root/yay-install.sh
-rm /mnt/root/yay-install.sh
+cp ~/clean-arch-install/chroot-scripts/yay-timeshift.sh /mnt/root/
+chmod +x /mnt/root/yay-timeshift.sh
+arch-chroot /mnt /root/yay-timeshift.sh
+rm /mnt/root/yay-timeshift.sh
 
 arch-chroot /mnt yay -S --noconfirm timeshift-autosnap
 
 # unmounting partitions
 echo "unmounting all..."
 umount -R /mnt
+reboot
