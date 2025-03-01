@@ -142,6 +142,7 @@ arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 
 cp ~/clean-arch-install/chroot-scripts/yay-timeshift.sh /mnt/root/
+dos2unix -- /mnt/root/yay-timeshift.sh
 chmod +x /mnt/root/yay-timeshift.sh
 arch-chroot /mnt /root/yay-timeshift.sh
 rm /mnt/root/yay-timeshift.sh
