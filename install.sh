@@ -145,7 +145,7 @@ cp ~/clean-arch-install/chroot-scripts/yay-autosnap.sh /mnt/root/
 dos2unix -- /mnt/root/yay-autosnap.sh
 chmod +x /mnt/root/yay-autosnap.sh
 arch-chroot /mnt /root/yay-autosnap.sh $username
-rm /mnt/root/yay-timeshift.sh
+rm /mnt/root/yay-autosnap.sh
 
 # unmounting partitions
 echo "unmounting all..."
