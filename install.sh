@@ -141,10 +141,10 @@ arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 # installing grafics drivers
 arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 
-cp ~/clean-arch-install/chroot-scripts/yay-timeshift.sh /mnt/root/
-dos2unix -- /mnt/root/yay-timeshift.sh
-chmod +x /mnt/root/yay-timeshift.sh
-arch-chroot /mnt /root/yay-timeshift.sh $username
+cp ~/clean-arch-install/chroot-scripts/yay-autosnap.sh /mnt/root/
+dos2unix -- /mnt/root/yay-autosnap.sh
+chmod +x /mnt/root/yay-autosnap.sh
+arch-chroot /mnt /root/yay-autosnap.sh $username
 rm /mnt/root/yay-timeshift.sh
 
 # unmounting partitions
