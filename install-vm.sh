@@ -27,10 +27,10 @@ read hostname
 
 # set root password
 echo -n "Root password: "
-read passwordRoot
+read -s passwordRoot
 echo
 echo -n "Repeat password: "
-read password2Root
+read -s password2Root
 echo
 [[ "$passwordRoot" == "$password2Root" ]] || ( echo "Passwords did not match"; exit 1; )
 
@@ -40,10 +40,10 @@ read username
 : "${username:?"Missing username"}"
 
 echo -n "Password for user ${username}: "
-read passwordUser
+read -s passwordUser
 echo
 echo -n "Repeat password: "
-read password2User
+read -s password2User
 echo
 [[ "$passwordUser" == "$password2User" ]] || ( echo "Passwords did not match"; exit 1; )
 
@@ -56,14 +56,14 @@ echo n; echo 4; echo; echo;
 echo p; echo w) | fdisk "${device}"
 
 # formatting partitions
-mkfs.fat -F32  "${device}p1"
-mkfs.ext4 -L boot "${device}p2"
-mkswap -L swap "${device}p3"
-swapon "${device}p3"
-mkfs.btrfs -L arch "${device}p4" -f
+mkfs.fat -F32  "${device}1"
+mkfs.ext4 -L boot "${device}2"
+mkswap -L swap "${device}3"
+swapon "${device}3"
+mkfs.btrfs -L arch "${device}4" -f
 
 # creating BTRFS subvolumes
-mount "${device}p4" /mnt
+mount "${device}4" /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@var
 btrfs su cr /mnt/@home
@@ -71,14 +71,14 @@ btrfs su cr /mnt/@snapshots
 umount /mnt
 
 # mounting partitions and subvolumes
-mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@ "${device}p4" /mnt
+mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@ "${device}4" /mnt
 mkdir -p /mnt/{home,boot,var,.snapshots}
-mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@var "${device}p4" /mnt/var
-mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@home "${device}p4" /mnt/home
-mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@snapshots "${device}p4" /mnt/.snapshots
-mount "${device}p2" /mnt/boot
+mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@var "${device}4" /mnt/var
+mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@home "${device}4" /mnt/home
+mount -o noatime,compress=lzo,space_cache=v2,ssd,subvol=@snapshots "${device}4" /mnt/.snapshots
+mount "${device}2" /mnt/boot
 mkdir /mnt/boot/efi
-mount "${device}p1" /mnt/boot/efi
+mount "${device}1" /mnt/boot/efi
 
 # installing base packages, generating fstab
 pacstrap /mnt base 
@@ -134,8 +134,11 @@ arch-chroot /mnt systemctl enable paccache.timer
 
 # installing Grub
 arch-chroot /mnt pacman -S --noconfirm grub efibootmgr grub-btrfs os-prober
-arch-chroot /mnt grub-install --removable --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
+arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+# installing grafics drivers
+arch-chroot /mnt pacman -S --noconfirm xf86-video-vesa
 
 cp ~/clean-arch-install/chroot-scripts/yay-autosnap.sh /mnt/root/
 dos2unix -- /mnt/root/yay-autosnap.sh
