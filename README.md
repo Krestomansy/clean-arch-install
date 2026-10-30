@@ -5,7 +5,7 @@ My script for clean Arch Linux installation for VM
 ```
 
 pacman -Sy
-pacman -S git
+pacman -S git dos2unix
 git clone https://github.com/Krestomansy/clean-arch-install
 cd clean-arch-install
 chmod +x install.sh
